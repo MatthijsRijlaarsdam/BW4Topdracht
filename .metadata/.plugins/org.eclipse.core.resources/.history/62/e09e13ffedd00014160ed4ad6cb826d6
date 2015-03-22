@@ -15,11 +15,6 @@ init module {
 		% Record the initial state of movement in belief base.
 		if bel( percept(state(State)) ) then insert( state(State) ).
 		
-		%record the sequence in belief base.
-		if bel(percept(sequence([Color])))then insert(sequence([Color])).
-		
-		
-		
 		% Adopt initial goals.
 		forall bel( room(Place) ) do adopt( in(Place) ).
 
@@ -63,26 +58,13 @@ event module {
 		forall bel( state(State), percept(state(NewState)) ) do delete( state(State) ) + insert( state(NewState) ).
 		
 		% Record when we are entering or leaving a room.
+		forall bel( percept(in(Place)) ) do insert( in(Place) ).
+		forall bel( percept(not(in(Place))) ) do delete( in(Place) ).
+
+		% Exercise 2.1b: insert rules for handling percepts other than "sendonce" percepts.
 		forall bel(percept(in(Room))) do insert(in(Room)).
 		forall bel(percept(not(in(Room)))) do delete(in(Room)).
-		
-		%Record when we are at a certain place
 		forall bel(at(Place), percept(at(NewPlace))) do delete(at(Place)) + insert(at(NewPlace)).
-		
-		%Record when we are at a block
-		forall bel(percept(atBlock(Block))) do insert(atBlock(Block)).
-		forall bel(percept(not(atBlock(Block)))) do delete (atBLock(Block)).
-		
-		%record when we percieve a block is a certain color
-		forall bel(percept(color(Block,Color)), not(color(Block,Color))) do insert(color(Block,Color)).
- 		forall bel(color(Block,Color), not(percept(color(Block,Color)))) do delete(color(Block,Color)). 	
- 		
- 		%record when we hold a block
-		forall bel( percept(holding(Block)) ) do insert( holding(Block) ).
-		forall bel( percept(not(holding(Block))) ) do delete( holding(Block) ).	
-		
-		%records a current sequence index update
-		forall bel(sequenceIndex(Index), percept(sequenceIndex(newIndex))) do delete(sequenceIndex(Index)) + insert(sequenceIndex(newIndex)).
 		
 		% Exercise 2.5b: insert code for goal management that allows an agent to systematically search for blocks. (if needed)
 		
