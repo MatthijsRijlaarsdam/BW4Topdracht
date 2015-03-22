@@ -20,7 +20,7 @@ init module {
 
 		% Exercise 2.1a: insert rules for processing percepts that are sent only at the beginning of a session, 
 		%  and/or need to be initialized.
-		forall bel(percept(place(Place)) do insert(place(Place)).
+		forall bel(percept(place(Place))) do insert(place(Place)).
 		
 	}	
 	actionspec {
@@ -62,9 +62,9 @@ event module {
 		forall bel( percept(not(in(Place))) ) do delete( in(Place) ).
 
 		% Exercise 2.1b: insert rules for handling percepts other than "sendonce" percepts.
-		forall bel(percept(in(Room)) do insert(in(Room)).
-		forall bel(percept(not(in(Room))) do delete(in(Room)).
-		forall bel(at(Place), percept(at(NewPlace)) do delete(at(Place)) + insert(at(NewPlace)).
+		forall bel(percept(in(Room))) do insert(in(Room)).
+		forall bel(percept(not(in(Room)))) do delete(in(Room)).
+		forall bel(at(Place), percept(at(NewPlace))) do delete(at(Place)) + insert(at(NewPlace)).
 		
 		% Exercise 2.5b: insert code for goal management that allows an agent to systematically search for blocks. (if needed)
 		
