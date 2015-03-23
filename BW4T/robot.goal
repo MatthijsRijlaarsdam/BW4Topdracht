@@ -60,7 +60,7 @@ init module {
 		% The goToBlock(Block) action makes the agent move to a block.
 		% The agent will have arrived when it is in a room, at the desired block (block with the right color)
 		goToBlock(BlockID) {
-			pre { in(Room), color(Block, nextColorInSeq(Color)), not(atBlock(BlockID)) }
+			pre { in(Room), color(BlockID, nextColorInSeq(Color)), not(atBlock(BlockID)) }
 			post { true }
 		}
 		
