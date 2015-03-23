@@ -47,16 +47,19 @@ init module {
 		goToBlock(BlockID) {
 			pre { atBlock(BlockID), in(Room), color(Block, nextColorInSeq(Color)) }
 			post { true }
+		}
 		
 		% The pickUp action makes the agent pick up a block and therefore removing it from the ground.
 		pickUp {
 			pre { holding(Block) }
 			post { not(at(Block)) }
+		}
 		
 		% The putDown action needs work.
 		putDown {
 			pre { not(holding(Block)) }
 			post { if (in(Room)) then (at(Block))) }
+		}
 	}
 }
 
