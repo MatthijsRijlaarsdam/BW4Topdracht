@@ -4,6 +4,9 @@ init module {
 		room(PlaceID) :- zone(_,PlaceID,_,_,Neighbours), length(Neighbours,1).
 		
 		
+		
+		
+		
 		% Color is the color needed to be dropped of at this moment
 		nextColorInSeq(Color) :- sequenceIndex(Index),sequence(Colors),element_at(Color,Colors,Index).
 		
@@ -26,8 +29,8 @@ init module {
 		
 		
 		
-		% Adopt an initial room to go to here
-		if bel( room(Place) ) then adopt( in(Place) ).
+		% Adopt all rooms initally
+		forall bel( room(Place) ) do adopt( in(Place) ).
 		
 		
 
@@ -47,7 +50,10 @@ init module {
 		%record the next color in the belief base.
 		if bel(nextColorInSeq(Color)) then insert (nextColor(Color)).
 		
+		if a-goal( in('DropZone'))then drop (in('DropZone')).
 		
+		
+
 		
 		
 		
@@ -63,7 +69,7 @@ init module {
 		% The goToBlock(Block) action makes the agent move to a block.
 		% The agent will have arrived when it is in a room, at the desired block (block with the right color)
 		goToBlock(BlockID) {
-			pre { in(Room), color(Block, nextColorInSeq(Color)), not(atBlock(BlockID)) }
+			pre { in(Room), block(Block, nextColor(Color),Place), not(atBlock(BlockID)) }
 			post { true }
 		}
 		
@@ -82,7 +88,7 @@ init module {
 	}
 }
 
-main module [exit=never] {
+main module [exit=nogoals] {
 	program {
 		if a-goal( in(Place) ) then goTo(Place).
 
@@ -119,16 +125,16 @@ event module {
 		forall bel(sequenceIndex(Index), percept(sequenceIndex(NewIndex))) do delete(sequenceIndex(Index)) + insert(sequenceIndex(NewIndex)).
 		
 		%update nextcolor if different from nextColorInSeq.
-		forall bel(nextColorInSeq(NewColor), nextColor(Color)) do delete(nextColor(Color))+insert (nextColor(NewColor)).
+		if bel(nextColorInSeq(NewColor), nextColor(Color)) then delete(nextColor(Color))+insert (nextColor(NewColor)).
 		
-		%record when we percieve a block is a certain color at a certain place
-		forall bel( percept(color(BlockID, ColorID)), at(PlaceID) ) do insert( block(BlockID, ColorID, PlaceID) ).
- 		forall bel( at(PlaceID), block(BlockID, ColorID, PlaceID),percept(not(color(BlockID, ColorID))) ) do delete( block(BlockID, ColorID, PlaceID) ). 
+		%record when we percieve a block is a certain color at a certain place and remember
+		forall bel( percept(color(BlockID, ColorID)), percept(at(PlaceID)) ) do insert( block(BlockID, ColorID, PlaceID) ).
 		
-		%if robot does not now a block of wanted color exits, go to new room 
-		forall bel(nextColor(Color), not(block(Block,Color,_)), not(visited(Place)),room(Place)) do adopt (in(Place)).
-		%if robot nows a block it wants exists, adopt to go to block
-		%forall bel(nextColorInSeq(Color), color(Block,Color)) do adopt( at(Block)).
+		
+		
+		
+		
+		
 		
 		
 		
