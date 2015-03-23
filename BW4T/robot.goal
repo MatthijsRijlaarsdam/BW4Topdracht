@@ -37,17 +37,26 @@ init module {
 	actionspec {
 		% The goTo action makes the agent move to a place (location) in the BW4T environment.
 		% As long as the agent has not arrived at the place it is going to, it will be in "traveling" mode.
-		goTo(Location) {
-            pre { not(state(traveling)) }
+		goTo(PlaceID) {
+            pre { not(state(traveling)),  zone(_,PlaceID,_,_,_) }
 			post { true }
 		}
 
-		% Exercise 2.3a: insert a specification for the goToBlock(Block) action.
-
-		% Exercise 2.3b: insert a specification for the pickUp action.
-
-		% Exercise 2.3c: insert a specification for the putDown action.
+		% The goToBlock(Block) action makes the agent move to a block.
+		% The agent will have arrived when it is in a room, at the desired block (block with the right color)
+		goToBlock(BlockID) {
+			pre { atBlock(BlockID), in(Room), color(Block, nextColorInSeq(Color)) }
+			post { true }
 		
+		% The pickUp action makes the agent pick up a block and therefore removing it from the ground.
+		pickUp {
+			pre { holding(Block) }
+			post { not(at(Block)) }
+		
+		% The putDown action needs work.
+		putDown {
+			pre { not(holding(Block)) }
+			post { if (in(Room)) then (at(Block))) }
 	}
 }
 
