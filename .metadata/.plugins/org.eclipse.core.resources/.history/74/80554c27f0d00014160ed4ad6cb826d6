@@ -29,7 +29,7 @@ init module {
 		
 		
 		%record the sequence in belief base.
-		if bel(percept(sequence(Colors))) then insert(sequence(Colors)).
+		if bel(percept(sequence([Color]))) then insert(sequence([Color])).
 		
 		
 		
