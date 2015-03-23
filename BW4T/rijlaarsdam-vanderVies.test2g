@@ -4,7 +4,7 @@
 
 masTest {
 	% Test agent 'rijlaarsdam-vanderVies' from 'rijlaarsdam-vanderVies.mas2g' for at most 5 minutes.
-	mas = "bw4t.mas2g".
+	mas = "rijlaarsdam-vanderVies.mas2g".
 	timeout = 300.
 	robot {
 		test {
