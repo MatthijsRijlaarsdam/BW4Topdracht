@@ -60,20 +60,20 @@ init module {
 		% The goToBlock(Block) action makes the agent move to a block.
 		% The agent will have arrived when it is in a room, at the desired block (block with the right color)
 		goToBlock(BlockID) {
-			pre { atBlock(BlockID), in(Room), color(Block, nextColorInSeq(Color)) }
-			post { true }
+			pre { in(Room), color(Block, nextColorInSeq(Color)) }
+			post { atBlock(BlockID }
 		}
 		
 		% The pickUp action makes the agent pick up a block and therefore removing it from the ground.
 		pickUp {
-			pre { holding(Block) }
-			post { not(at(Block)) }
+			pre { not(holding(Block)) }
+			post { true, not(at(Block)) }
 		}
 		
 		% The putDown action needs work.
 		putDown {
-			pre { not(holding(Block)) }
-			post { if (in(Room)) then (at(Block))) }
+			pre { holding(Block) }
+			post { (if (in(Room)) then (at(Block)))), not(holding(Block)) }
 		}
 	}
 }
