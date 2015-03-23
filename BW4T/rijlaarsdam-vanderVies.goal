@@ -83,9 +83,11 @@ init module {
 
 main module [exit=nogoals] {
 	program {
-		% Makes the agent go to a place if the place is a goal.
+		% Makes the agent go to a place if the place is a goal, picks up and drops the blocks
 		% Uses the goTo action from the actionspec
-		if a-goal( in(Place) ) then goTo(Place).		
+		if a-goal( in(Place) ) then goTo(Place).	
+		if a-goal(at(Block)) then goToBlock(Block).
+		if a-goal(holding(Block)), bel(at(Block)) then pickUp.	
 	}
 }
 
@@ -123,6 +125,11 @@ event module {
 		
 		% Record when we percieve a block is a certain color at a certain place and remember
 		forall bel( percept(color(BlockID, ColorID)), percept(at(PlaceID)) ) do insert( block(BlockID, ColorID, PlaceID) ).
+		
+		forall bel(block(Block,Color,Room),nextColor(Color),not (in(Room))),goal(in(Place)) do drop(in(Place))+ adopt (in(Room)).
+		forall bel(block(Block,Color,Room),nextColor(Color),in(Room),not(at(Block))),not(goal(at(Block),holding(SomeBlock))) ,goal(in(Place)) do drop(in(Place))+ adopt (at(Block)).
+		forall bel(block(Block,Color,Room),nextColor(Color),in(Room),at(Block)) do drop(at(Block))+adopt (holding(Block)).
+		if bel(holding(Block)), not (goal(in('DropZone'))) then drop(holding(Block))+adopt(in('DropZone')).
 	}
 }
 
