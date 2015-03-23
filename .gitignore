@@ -1,50 +1,14 @@
 /RemoteSystemTempFiles
 
-.metadata/.lock
-
-.metadata/.log
-
-.metadata/.mylyn/repositories.xml.zip
-
-.metadata/.plugins/org.eclipse.cdt.core/.log
-
-.metadata/.plugins/org.eclipse.cdt.make.core/specs.c
-
-.metadata/.plugins/org.eclipse.cdt.make.core/specs.cpp
-
-.metadata/.plugins/org.eclipse.core.resources/.projects/BW4T/.markers.snap
-
-.metadata/.plugins/org.eclipse.core.resources/.projects/BW4T/.indexes/properties.index
-
-.metadata/.plugins/org.eclipse.core.resources/.projects/BW4T/org.eclipse.egit.core/GitProjectData.properties
-
-.metadata/.plugins/org.eclipse.core.resources/.projects/BW4T/.syncinfo.snap
-
-.metadata/.plugins/org.eclipse.core.resources/.projects/RemoteSystemsTempFiles/.markers.snap
-
-.metadata/.plugins/org.eclipse.core.resources/.projects/RemoteSystemsTempFiles/.syncinfo.snap
-
-.metadata/.plugins/org.eclipse.core.resources/.root/.markers.snap
-
-.metadata/.plugins/org.eclipse.core.resources/.root/.indexes/properties.index
-
-.metadata/.plugins/org.eclipse.core.resources/.root/.indexes/properties.index
-
-.metadata/.plugins/org.eclipse.core.resources/.safetable/org.eclipse.core.resources
+.metadata/
 
 RemoteSystemsTempFiles/.project
-
-.metadata/.plugins/org.eclipse.core.resources/.snap
-
-.metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.core.resources.prefs
 
 *.prefs
 
 *.index
 
 *.idx
-
-.metadata/.plugins/org.eclipse.dltk.core/cache/index
 
 *.dat
 
@@ -57,7 +21,3 @@ RemoteSystemsTempFiles/.project
 *.mark
 
 *.properties
-
-.metadata/.plugins/org.eclipse.team.cvs.core/.running
-
-.metadata/version.ini
