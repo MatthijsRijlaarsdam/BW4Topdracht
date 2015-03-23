@@ -9,9 +9,9 @@ environment{
 }
 
 agentfiles{
-	"rijlaarsdam-vanderVies.goal" [name = rijlaarsdam-vanderVies].
+	"rijlaarsdam-vanderVies.goal" [name = robot].
 }
 
 launchpolicy{
-	when [max=1]@env do launch rijlaarsdam-vanderVies.
+	when [max=1]@env do launch robot.
 }
