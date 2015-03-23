@@ -1,0 +1,17 @@
+% GOAL Agent for "Blocks World for Teams", by:
+% Matthijs Rijlaarsdam	4308417		mscrijlaarsdam@gmail.com
+% Saul van der Vies		4356470		M.S.vanderVies@student.tudelft.nl
+
+environment{
+	env = "bw4t-client-3.8.0.jar".
+	init = [ clientip ="localhost", clientport="2000", serverip = "localhost", serverport = "8000",
+			 agentcount = "1", humancount = "0", launchgui = "false", goal = "true"].
+}
+
+agentfiles{
+	"rijlaarsdam-vanderVies.goal" [name = rijlaarsdam-vanderVies].
+}
+
+launchpolicy{
+	when [max=1]@env do launch rijlaarsdam-vanderVies.
+}

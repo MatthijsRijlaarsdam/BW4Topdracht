@@ -1,0 +1,31 @@
+% GOAL Agent for "Blocks World for Teams", by:
+% Matthijs Rijlaarsdam	4308417		mscrijlaarsdam@gmail.com
+% Saul van der Vies		4356470		M.S.vanderVies@student.tudelft.nl
+
+masTest {
+	% Test agent 'rijlaarsdam-vanderVies' from 'rijlaarsdam-vanderVies.mas2g' for at most 5 minutes.
+	mas = "bw4t.mas2g".
+	timeout = 300.
+	robot {
+		test {
+			evaluate {
+				% An agent should not drop a block outside a room.
+				% An agent should not perform the putDown action when the agent is not in a room.
+				never do(putDown), bel(not(in(Room))).
+				
+				% An agent should not pick up a block that is not needed next.
+				% An agent should not perform the pickUp action when the block that it is at does not have the color that is next in the sequence.
+				never do(pickUp), bel((not(color(Block, nextColorInSeq(Color)), atBlock(Block)))).
+				
+				% An agent that is not holding a block that is needed next should not enter the dropzone.
+				% An agent that is holding a block that does not have the color that is next in the sequence should not be in the dropzone.
+				never bel(in(zone(_,DropZone,_,_,_)), (holding(Block), not(color(Block, nextColorInSeq(Color))))).
+				
+				% An agent should not leave the drop zone whilst holding a block.
+				% An agent should not not be in the dropzone when still holding a block.
+				never bel(not(in(zone(_,DropZone,_,_,_))), holding(Block)).
+				
+			} in do main until bel(sequence(Colors),length(Colors,L),sequenceIndex(L)). % delivered all blocks.
+		}
+	}
+}

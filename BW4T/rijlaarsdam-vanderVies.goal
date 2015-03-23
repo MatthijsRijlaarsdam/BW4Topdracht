@@ -1,0 +1,128 @@
+% GOAL Agent for "Blocks World for Teams", by:
+% Matthijs Rijlaarsdam	4308417		mscrijlaarsdam@gmail.com
+% Saul van der Vies		4356470		M.S.vanderVies@student.tudelft.nl
+
+init module {
+	knowledge {
+		% A room is a place with exactly one neighbour, so there is only one way to get to and from that place.
+		% A room is defined as a zone, with a PlaceID and list of neighbours which is exactly 1 item long 
+		room(PlaceID) :- zone(_,PlaceID,_,_,Neighbours), length(Neighbours,1).
+		
+		% Color is the color needed to be dropped of at this moment
+		% Color is defined here as the color that is required to be dropped in the drop zone next
+		nextColorInSeq(Color) :- sequenceIndex(Index), sequence(Colors), element_at(Color,Colors,Index).
+		
+		% get element X at index K of list [_|L]
+		element_at(X,[X|_],0).
+		element_at(X,[_|L],K) :- element_at(X,L,K1), K is K1 + 1.
+		
+	}
+	program {
+		% Store map information, navigation points in the agent's belief base.
+		% Lists all zones in the agent's environment, along with the aspects of all the zones (ID, name of the zone, coördinates, amount of neighbours)
+		forall bel( percept(zone(ID, Name, X, Y, Neighbours)) ) do insert( zone(ID, Name, X, Y, Neighbours) ).
+
+		% Records the initial state of movement in the belief base.
+		% The state is set of the start position of the agent 
+		if bel( percept(state(State)) ) then insert( state(State) ).
+
+		% Adopts all the rooms initally, so that it will always search them all
+		forall bel( room(Place) ) do adopt( in(Place) ).
+
+		% Records all places in the environment in the belief case.
+		forall bel(percept(place(Place))) do insert(place(Place)).
+		
+		% Records initial sequenceIndex in the belief case
+		% Stores the sequenceIndex as it is at the beginning of the program.
+		if bel(percept(sequenceIndex(Index))) then insert(sequenceIndex(Index)).
+		
+		% Records initial color sequence int the belief case
+		% Stores the color sequence as it is at the beginning of the program.
+		if bel(percept(sequence(Colors))) then insert(sequence(Colors)).
+		
+		% Records the next color in the belief base.
+		% Records the color that has to be brought and dropped in the dropzone next.
+		if bel(nextColorInSeq(Color)) then insert (nextColor(Color)).
+		if a-goal( in('DropZone'))then drop (in('DropZone')).
+		
+	}	
+	actionspec {
+		% The goTo action makes the agent move to a place (location) in the BW4T environment.
+		% As long as the agent has not arrived at the place it is going to, it will be in "traveling" mode.
+		% The action also checks if the place is wants to go is actually existant.
+		goTo(PlaceID) {
+            pre { not(state(traveling)),  zone(_,PlaceID,_,_,_) }
+			post { true }
+		}
+
+		% The goToBlock(Block) action makes the agent move to a block.
+		% The agent will have arrived when it is in a room, at the desired block (block with the right color)
+		% The action checks if it is in a room, and not yet at the block it wants to go to.
+		goToBlock(BlockID) {
+			pre { in(Room), block(Block, nextColor(Color),Place), not(atBlock(BlockID)) }
+			post { true }
+		}
+		
+		% The pickUp action makes the agent pick up a block and therefore removing it from the ground.
+		% The action also checks if the agent is not currently already holding a bloc, for it can only carry one block at a time.
+		pickUp {
+			pre { not(holding(Block)) }
+			post { not(at(Block)) }
+		}
+		
+		% The putDown action makes the agent put down the block it's currently holding and therefore places it back on the ground.
+		% The action also checks if it is in a room when attempting to drop a block, so that it may not be dropped in a corridor for example 
+		% and it checks whether the agent is holding a block, for it can not put something down that it does not possess. 
+		putDown {
+			pre { holding(Block) }
+			post { if (in(Room)) then (at(Block))), not(holding(Block)) }
+		} 
+
+	}
+}
+
+main module [exit=nogoals] {
+	program {
+		% Makes the agent go to a place if the place is a goal.
+		% Uses the goTo action from the actionspec
+		if a-goal( in(Place) ) then goTo(Place).		
+	}
+}
+
+event module {
+	program {
+	    % Update the agent's state of movement.
+	    % Percepts the current state, then deletes the old state and inserts the newly percepted state as the current state
+		forall bel( state(State), percept(state(NewState)) ) do delete( state(State) ) + insert( state(NewState) ).
+		
+		% Records when the agent is entering or leaving a room, records visited Room after leaving
+		% Updates it's current situation of being in a room or not, when the agent is no longer in a room, it deletes the belief that it was
+		% and states that it visited the room it left, so that it won't have to search that room again. 
+		forall bel(percept(in(Room))) do insert(in(Room)).
+		forall bel(percept(not(in(Room)))) do delete(in(Room))+ insert(visited(Room)).
+		
+		% Records when we are at a certain place
+		% Deletes the old place when a new one is percepted and inserts the new place
+		forall bel(at(Place), percept(at(NewPlace))) do delete(at(Place)) + insert(at(NewPlace)).
+		
+		% Records when we are at a block (around, close enough to pick up)
+		% Deletes the old if the agent is no longer around it, inserts it when it is.
+		forall bel(percept(atBlock(Block))) do insert(atBlock(Block)).
+		forall bel(percept(not(atBlock(Block)))) do delete (atBLock(Block)).
+ 		
+ 		% Records when we hold a block
+ 		% Deletes the old if the agent no longer holds it, inserts it when it is.
+		forall bel( percept(holding(Block)) ) do insert( holding(Block) ).
+		forall bel( percept(not(holding(Block))) ) do delete( holding(Block) ).	
+		
+		% Records a current sequence index update
+		forall bel(sequenceIndex(Index), percept(sequenceIndex(NewIndex))) do delete(sequenceIndex(Index)) + insert(sequenceIndex(NewIndex)).
+		
+		% Update nextcolor if different from nextColorInSeq.
+		if bel(nextColorInSeq(NewColor), nextColor(Color)) then delete(nextColor(Color))+insert (nextColor(NewColor)).
+		
+		% Record when we percieve a block is a certain color at a certain place and remember
+		forall bel( percept(color(BlockID, ColorID)), percept(at(PlaceID)) ) do insert( block(BlockID, ColorID, PlaceID) ).
+	}
+}
+
