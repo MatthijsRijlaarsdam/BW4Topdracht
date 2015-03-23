@@ -63,7 +63,7 @@ init module {
 		% The goToBlock(Block) action makes the agent move to a block.
 		% The agent will have arrived when it is in a room, at the desired block (block with the right color)
 		goToBlock(BlockID) {
-			pre { in(Room), color(BlockID, nextColorInSeq(Color)), not(atBlock(BlockID)) }
+			pre { in(Room), color(Block, nextColorInSeq(Color)), not(atBlock(BlockID)) }
 			post { true }
 		}
 		
@@ -109,9 +109,7 @@ event module {
 		forall bel(percept(atBlock(Block))) do insert(atBlock(Block)).
 		forall bel(percept(not(atBlock(Block)))) do delete (atBLock(Block)).
 		
-		%record when we percieve a block is a certain color, and rember this information
-		forall bel(percept(color(Block,Color)), not(color(Block,Color))) do insert(color(Block,Color)).
- 		%forall bel(color(Block,Color), not(percept(color(Block,Color)))) do delete(color(Block,Color)). 	
+		 	
  		
  		%record when we hold a block
 		forall bel( percept(holding(Block)) ) do insert( holding(Block) ).
@@ -120,9 +118,15 @@ event module {
 		%records a current sequence index update
 		forall bel(sequenceIndex(Index), percept(sequenceIndex(NewIndex))) do delete(sequenceIndex(Index)) + insert(sequenceIndex(NewIndex)).
 		
+		%update nextcolor if different from nextColorInSeq.
+		forall bel(nextColorInSeq(NewColor), nextColor(Color)) do delete(nextColor(Color))+insert (nextColor(NewColor)).
+		
+		%record when we percieve a block is a certain color at a certain place
+		forall bel( percept(color(BlockID, ColorID)), at(PlaceID) ) do insert( block(BlockID, ColorID, PlaceID) ).
+ 		forall bel( at(PlaceID), block(BlockID, ColorID, PlaceID),percept(not(color(BlockID, ColorID))) ) do delete( block(BlockID, ColorID, PlaceID) ). 
 		
 		%if robot does not now a block of wanted color exits, go to new room 
-		forall bel(nextColor(Color), not(color(Block,Color)), not(visited(Place)),room(Place)) do adopt (in(Place)).
+		forall bel(nextColor(Color), not(block(Block,Color,_)), not(visited(Place)),room(Place)) do adopt (in(Place)).
 		%if robot nows a block it wants exists, adopt to go to block
 		%forall bel(nextColorInSeq(Color), color(Block,Color)) do adopt( at(Block)).
 		
