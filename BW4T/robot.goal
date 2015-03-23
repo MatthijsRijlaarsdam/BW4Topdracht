@@ -3,7 +3,16 @@ init module {
 		% A room is a place with exactly one neighbour, i.e., there is only one way to get to and from that place.
 		room(PlaceID) :- zone(_,PlaceID,_,_,Neighbours), length(Neighbours,1).
 		
-		% Exercise 2.2: insert a definition of the predicate "nextColorInSeq(Color)".
+		
+		% Color is the color needed to be dropped of at this moment
+		nextColorInSeq(Color) :- sequenceIndex(Index),sequence(Colors),element_at(Color,Colors,Index).
+		
+		%get element X at index K of list [_|L]
+		element_at(X,[X|_],0).
+		element_at(X,[_|L],K) :- element_at(X,L,K1), K is K1 + 1.
+		
+        
+    	
 
 		% Exercise 2.5 + 2.6: (optional) if needed, insert additional knowledge here.
 		
@@ -19,6 +28,7 @@ init module {
 		
 		% Adopt initial goals.
 		forall bel( room(Place) ) do adopt( in(Place) ).
+		
 
 		% Exercise 2.1a: insert rules for processing percepts that are sent only at the beginning of a session, 
 		%  and/or need to be initialized.
@@ -28,8 +38,13 @@ init module {
 		if bel(percept(sequenceIndex(Index))) then insert(sequenceIndex(Index)).
 		
 		
+		
+		
 		%record the sequence in belief base.
 		if bel(percept(sequence(Colors))) then insert(sequence(Colors)).
+		
+		
+		
 		
 		
 		
@@ -109,3 +124,4 @@ event module {
 		
 	}
 }
+
