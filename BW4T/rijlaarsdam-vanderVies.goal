@@ -19,7 +19,7 @@ init module {
 	}
 	program {
 		% Store map information, navigation points in the agent's belief base.
-		% Lists all zones in the agent's environment, along with the aspects of all the zones (ID, name of the zone, coördinates, amount of neighbours)
+		% Lists all zones in the agent's environment, along with the aspects of all the zones (ID, name of the zone, coï¿½rdinates, amount of neighbours)
 		forall bel( percept(zone(ID, Name, X, Y, Neighbours)) ) do insert( zone(ID, Name, X, Y, Neighbours) ).
 
 		% Records the initial state of movement in the belief base.
@@ -61,7 +61,7 @@ init module {
 		% The agent will have arrived when it is in a room, at the desired block (block with the right color)
 		% The action checks if it is in a room, and not yet at the block it wants to go to.
 		goToBlock(BlockID) {
-			pre { in(Room), block(Block, nextColor(Color),Place), not(atBlock(BlockID)) }
+			pre { in(Room), block(BlockID, nextColor(Color),Place), not(atBlock(BlockID)) }
 			post { true }
 		}
 		
@@ -69,7 +69,7 @@ init module {
 		% The action also checks if the agent is not currently already holding a bloc, for it can only carry one block at a time.
 		pickUp {
 			pre { not(holding(Block)) }
-			post { not(at(Block)) }
+			post { not(atBlock(Block)) }
 		}
 		
 		% The putDown action makes the agent put down the block it's currently holding and therefore places it back on the ground.
@@ -77,7 +77,7 @@ init module {
 		% and it checks whether the agent is holding a block, for it can not put something down that it does not possess. 
 		putDown {
 			pre { holding(Block) }
-			post { if (in(Room)) then (at(Block))), not(holding(Block)) }
+			post { if (in(Room)) then (atBlock(Block))), not(holding(Block)) }
 		} 
 
 	}
@@ -90,8 +90,8 @@ main module [exit=nogoals] {
 		if a-goal( in(Place) ) then goTo(Place).	
 		
 		% comment
-		if a-goal(at(Block)) then goToBlock(Block).
-		if a-goal(holding(Block)), bel(at(Block)) then pickUp.	
+		if a-goal(atBlock(Block)) then goToBlock(Block).
+		if a-goal(holding(Block)), bel(atBlock(Block)) then pickUp.	
 	}
 }
 
@@ -131,9 +131,8 @@ event module {
 		forall bel( percept(color(BlockID, ColorID)), percept(at(PlaceID)) ) do insert( block(BlockID, ColorID, PlaceID) ).
 		
 		forall bel(block(Block,Color,Room),nextColor(Color),not (in(Room))),goal(in(Place)) do drop(in(Place))+ adopt (in(Room)).
-		forall bel(block(Block,Color,Room),nextColor(Color),in(Room),not(at(Block))), goal(in(Place)) do drop(in(Place))+ adopt (at(Block)).
-		forall bel(block(Block,Color,Room),nextColor(Color),in(Room),at(Block)) do drop(at(Block))+adopt (holding(Block)).
-		if bel(holding(Block)), not (goal(in('DropZone'))) then drop(holding(Block))+adopt(in('DropZone')).
+		forall bel(block(Block,Color,Room),nextColor(Color),in(Room),not(atBlock(Block))), goal(in(Place)) do drop(in(Place))+ adopt (atBlock(Block)).
+		forall bel(block(Block,Color,Room),nextColor(Color),in(Room),atBlock(Block)) do drop(atBlock(Block))+adopt (holding(Block)).
+		if bel(holding(Block),not(in('DropZone'))), not (goal(in('DropZone'))) then drop(holding(Block))+adopt(in('DropZone')).
 	}
 }
-
