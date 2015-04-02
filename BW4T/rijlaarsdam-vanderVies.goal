@@ -89,8 +89,9 @@ main module [exit=nogoals] {
 		% Uses the goTo action from the actionspec
 		if a-goal( in(Place) ) then goTo(Place).	
 		
-		% comment
-		if a-goal(atBlock(Block)) then goToBlock(Block).
+		% go to block if in same room as block
+		if a-goal(atBlock(Block)),bel(block(Block,Color,Room),in(Room)) then goToBlock(Block).
+		%pick up block if at it and want it
 		if a-goal(holding(Block)), bel(atBlock(Block)) then pickUp.	
 	}
 }
@@ -114,32 +115,66 @@ event module {
 		% Records when we are at a block (around, close enough to pick up)
 		% Deletes the old if the agent is no longer around it, inserts it when it is.
 		forall bel(percept(atBlock(Block))) do insert(atBlock(Block)).
-		forall bel(percept(not(atBlock(Block)))) do delete (atBLock(Block)).
+		forall bel(percept(not(atBlock(Block)))) do delete (atBlock(Block)).
  		
  		% Records when we hold a block
  		% Deletes the old if the agent no longer holds it, inserts it when it is.
 		forall bel( percept(holding(Block)) ) do insert( holding(Block) ).
 		forall bel( percept(not(holding(Block))) ) do delete( holding(Block) ).	
 		
-		% Records a current sequence index update
-		forall bel(sequenceIndex(Index), percept(sequenceIndex(NewIndex))) do delete(sequenceIndex(Index)) + insert(sequenceIndex(NewIndex)).
+		% Records a current sequence index update and updates nextColor
+		forall bel(sequenceIndex(Index), percept(sequenceIndex(NewIndex)),nextColor(Color)) do delete(sequenceIndex(Index),nextColor(Color)) + insert(sequenceIndex(NewIndex)).
+		if bel(not(nextColor(Color)),nextColorInSeq(Color)) then insert(nextColor(Color)).
 		
-		% Update nextcolor if different from nextColorInSeq.
-		if bel(nextColorInSeq(NewColor), nextColor(Color)) then delete(nextColor(Color))+insert (nextColor(NewColor)).
+		
 		
 		% Record when we percieve a block is a certain color at a certain place and remember
 		forall bel( percept(color(BlockID, ColorID)), percept(at(PlaceID)) ) do insert( block(BlockID, ColorID, PlaceID) ).
 		
-		forall bel(block(Block,Color,Room),nextColor(Color),not (in(Room))),goal(in(Place)) do drop(in(Place))+ adopt (in(Room)).
-		forall bel(block(Block,Color,Room),nextColor(Color),in(Room),not(atBlock(Block))), goal(in(Place)) do drop(in(Place))+ adopt (atBlock(Block)).
-		forall bel(block(Block,Color,Room),nextColor(Color),in(Room),atBlock(Block)) do drop(atBlock(Block))+adopt (holding(Block)).
-		if bel(holding(Block),not(in('DropZone'))), not (goal(in('DropZone'))) then drop(holding(Block))+adopt(in('DropZone')).
+		
+		
+		%go to the dropzone if holding a block
+		if bel(holding(Block),not(in('DropZone'))), not (goal(in('DropZone'))) then adopt(in('DropZone')).
+		
+		%if we know a new block exists, update goals. Before droppingof as nextColor needs to be updated in next cycle.
+		if bel(block(Block,Color,Room),nextColor(Color), not(holding(SomeBlock))), not(goal(holding(SomeBlock))) then updateGoals.
+		
+		%if in the dropzone and holding a block, drop block and continue search
+		if bel(holding(Block), in('DropZone')) then dropOffBlock.
+		
+		
 	}
 }
 module dropOffBlock{
+	program[order=linearall]{
+		%delete block from knowledge base
+		if bel(holding(Block),block(Block,Color,Room)) then delete(block(Block,Color,Room)).
+		%deliver block
+		if true then putDown.
+		%continue searching for blocks in rooms not yet visited
+		forall bel(room(Place), not(visited(Place))) do adopt (in(Place)).
+		
+		
+		
+		
+	}
+}
+module updateGoals{
+	program[order=linearall]{
+		
+		%drop all current goals.
+		forall goal(in(Room)) do drop(in(Room)).
+		%if we know a next block exists go to block, one at a time
+		if bel(block(Block,Color,Room),nextColor(Color)) then getBlock.
+
+	}
+}
+module getBlock{
 	program{
 		
-		
-		
+		%if we know a block exists, go to block and pick it up, for all cases (not in room/ in room/ at block).
+		if bel(block(Block,Color,Room),nextColor(Color),not (in(Room)))  then  adopt (in(Room))+adopt( holding(Block))+adopt (atBlock(Block)).
+		if bel(block(Block,Color,Room),nextColor(Color),in(Room),not(atBlock(Block))) then adopt (atBlock(Block))+adopt (holding(Block)).
+		if bel(block(Block,Color,Room),nextColor(Color),in(Room),atBlock(Block)) then adopt (holding(Block)).
 	}
 }
