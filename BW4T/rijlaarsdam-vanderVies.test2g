@@ -15,17 +15,17 @@ masTest {
 				
 				% An agent should not pick up a block that is not needed next.
 				% An agent should not perform the pickUp action when the block that it is at does not have the color that is next in the sequence.
-				never do(pickUp), bel((not(color(Block, nextColorInSeq(Color)), atBlock(Block)))).
+				never do(pickUp), bel(nextColorInSeq(Color), atBlock(Block), not(block(Block,Color,SomePlace))).
 				
 				% An agent that is not holding a block that is needed next should not enter the dropzone.
-				% An agent that is holding a block that does not have the color that is next in the sequence should not be in the dropzone.
-				never bel(in(zone(_,DropZone,_,_,_)), (holding(Block), not(color(Block, nextColorInSeq(Color))))).
+				% An agent that is holding a block that does not have the color that is next in the sequence should not be going to the dropzone.
+				never do(goTo('DropZone')), bel( holding(Block), nextColorInSeq(Color),not(block(Block, Color,SomePlace))).
 				
 				% An agent should not leave the drop zone whilst holding a block.
-				% An agent should not not be in the dropzone when still holding a block.
-				never bel(not(in(zone(_,DropZone,_,_,_))), holding(Block)).
+				% An agent should always eventually drop a block whilst in the dropzone with a block
+				reactTo  (bel(in('DropZone'),holding(Block)), do(putDown)).
 				
-			} in do main until bel(sequence(Colors),length(Colors,L),sequenceIndex(L)). % delivered all blocks.
+			} in do main. % delivered all blocks.
 		}
 	}
 }
