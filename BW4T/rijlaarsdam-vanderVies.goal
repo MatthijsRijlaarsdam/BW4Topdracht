@@ -9,7 +9,7 @@ init module {
 		room(PlaceID) :- zone(_,PlaceID,_,_,Neighbours), length(Neighbours,1).
 		
 		% Color is the color needed to be dropped of at this moment
-		% Color is defined here as the color that is required to be dropped in the drop zone next
+		% Color is defined here as the color that is required to be dropped in the drop zone next by getting color at current index
 		nextColorInSeq(Color) :- sequenceIndex(Index), sequence(Colors), element_at(Color,Colors,Index).
 		
 		% get element X at index K of list [_|L]
@@ -32,6 +32,9 @@ init module {
 		% Records all places in the environment in the belief case.
 		forall bel(percept(place(Place))) do insert(place(Place)).
 		
+		%insert initial place
+		if bel(percept(at(Place))) then insert(at(Place)).
+		
 		% Records initial sequenceIndex in the belief case
 		% Stores the sequenceIndex as it is at the beginning of the program.
 		if bel(percept(sequenceIndex(Index))) then insert(sequenceIndex(Index)).
@@ -40,12 +43,11 @@ init module {
 		% Stores the color sequence as it is at the beginning of the program.
 		if bel(percept(sequence(Colors))) then insert(sequence(Colors)).
 		
-		% Records the next color in the belief base.
-		% Records the color that has to be brought and dropped in the dropzone next.
-		if bel(nextColorInSeq(Color)) then insert (nextColor(Color)).
+	
 		
-		% comment
+		% don't search in the dropzone
 		if a-goal( in('DropZone'))then drop (in('DropZone')).
+		if true then insert (visited('DropZone')).
 		
 	}	
 	actionspec {
@@ -54,7 +56,7 @@ init module {
 		% The action also checks if the place is wants to go is actually existant.
 		goTo(PlaceID) {
             pre { not(state(traveling)),  zone(_,PlaceID,_,_,_) }
-			post { true }
+			post { true}
 		}
 
 		% The goToBlock(Block) action makes the agent move to a block.
@@ -77,7 +79,7 @@ init module {
 		% and it checks whether the agent is holding a block, for it can not put something down that it does not possess. 
 		putDown {
 			pre { holding(Block) }
-			post { if (in(Room)) then (atBlock(Block))), not(holding(Block)) }
+			post {  not(holding(Block)) }
 		} 
 
 	}
@@ -98,6 +100,9 @@ main module [exit=nogoals] {
 
 event module {
 	program {
+		
+		%if we deleted the state in order to return a block, restore an avoid executing goTo again.
+		if bel(not (state(State))) then insert(state(traveling)).
 	    % Update the agent's state of movement.
 	    % Percepts the current state, then deletes the old state and inserts the newly percepted state as the current state
 		forall bel( state(State), percept(state(NewState)) ) do delete( state(State) ) + insert( state(NewState) ).
@@ -122,41 +127,59 @@ event module {
 		forall bel( percept(holding(Block)) ) do insert( holding(Block) ).
 		forall bel( percept(not(holding(Block))) ) do delete( holding(Block) ).	
 		
-		% Records a current sequence index update and updates nextColor
-		forall bel(sequenceIndex(Index), percept(sequenceIndex(NewIndex)),nextColor(Color)) do delete(sequenceIndex(Index),nextColor(Color)) + insert(sequenceIndex(NewIndex)).
-		if bel(not(nextColor(Color)),nextColorInSeq(Color)) then insert(nextColor(Color)).
+		% Records a current sequence index update 
+		forall bel(sequenceIndex(Index), percept(sequenceIndex(NewIndex))) do delete(sequenceIndex(Index)) + insert(sequenceIndex(NewIndex)).
+		%if current block no longer needs to be delivered, stop moving, return it to origin and continue searching.
+		if bel(holding(Block), block(Block,Color,Room),not(nextColorInSeq(Color)),state(traveling)),goal(in('DropZone')) then drop(in('DropZone'))+delete(state(traveling))+adopt(in(Room)).
+		
 		%if no nextColorInSeq then all goals completed, stop searching and terminate
 		forall bel(not(nextColorInSeq(Color))),goal(in(Room))do drop(in(Room)).
 		
 		
 		
 		
+		
 		% Record when we percieve a block is a certain color at a certain place and remember
 		forall bel( percept(color(BlockID, ColorID)), percept(at(PlaceID)) ) do insert( block(BlockID, ColorID, PlaceID) ).
+		% Delete a block from bel base if we see some bot removed a block and were not holding it, at that place and drop goal if it is goal to deliver block, then continue searching
+		forall bel(block(Block,Color,Place),not(holding(Block)), percept(not(color(Block,Place))), percept(at(Place))) do deleteBlock.
 		
 		
 		
-		%go to the dropzone if holding a block
-		if bel(holding(Block),not(in('DropZone'))), not (goal(in('DropZone'))) then adopt(in('DropZone')).
+		%go to the dropzone if holding a block that needs to be delivered.
+		if bel(holding(Block),block(Block,Color,Place),nextColorInSeq(Color),not(in('DropZone'))) then adopt(in('DropZone')).
+		
+		%return block if holding a block in origin without a delivery goal.
+		if bel(holding(Block),block(Block,Color,Room),not(nextColorInSeq(Color)), in(Room)) then continueSearch+putDown.
 		
 		%if we know a new block exists, update goals. Before droppingof as nextColor needs to be updated in next cycle.
-		if bel(block(Block,Color,Room),nextColor(Color), not(holding(SomeBlock))), not(goal(holding(SomeBlock))) then updateGoals.
+		if bel(block(Block,Color,Room),nextColorInSeq(Color), not(holding(SomeBlock))), not(goal(holding(SomeBlock))) then updateGoals.
 		
 		%if in the dropzone and holding a block, drop block and continue search
 		if bel(holding(Block), in('DropZone')) then dropOffBlock.
 		
 		
+		
 	}
 }
+module continueSearch{
+	program[order=linearall]{
+	
+		%continue searching for blocks in rooms not yet visited
+		forall bel(room(Place), not(visited(Place))) do adopt (in(Place)).
+		
+		
+	}
+}
+	
 module dropOffBlock{
 	program[order=linearall]{
 		%delete block from knowledge base
 		if bel(holding(Block),block(Block,Color,Room)) then delete(block(Block,Color,Room)).
 		%deliver block
 		if true then putDown.
-		%continue searching for blocks in rooms not yet visited
-		forall bel(room(Place), not(visited(Place))) do adopt (in(Place)).
-		
+		%continue searching for blocks in rooms not yet visited except for dropzone
+		if true then continueSearch.		
 		
 		
 		
@@ -165,19 +188,32 @@ module dropOffBlock{
 module updateGoals{
 	program[order=linearall]{
 		
-		%drop all current goals.
+		%drop all current searching goals.
 		forall goal(in(Room)) do drop(in(Room)).
 		%if we know a next block exists go to block, one at a time
-		if bel(block(Block,Color,Room),nextColor(Color)) then getBlock.
+		if bel(block(Block,Color,Room),nextColorInSeq(Color)) then getBlock.
 
+	}
+}
+module deleteBlock{
+	program[order=linearall]{
+		%delete the block we no longer see
+		forall bel(block(BlockID,ColorID,PlaceID),percept(not(color(BlockID, ColorID))), percept(at(PlaceID))) do delete (block(BlockID,ColorID,PlaceID)).
+		%delete all goals related to this block
+		if goal(holding(Block)), bel(not(block(Block,Color,Place))) then drop(holding(Block)).
+		if goal(atBlock(Block)), bel(not(block(Block,Color,Place))) then drop(atBlock(Block)).
+		%continue searching.
+		if true then continueSearch.		
+		
+		
 	}
 }
 module getBlock{
 	program{
 		
 		%if we know a block exists, go to block and pick it up, for all cases (not in room/ in room/ at block).
-		if bel(block(Block,Color,Room),nextColor(Color),not (in(Room)))  then  adopt (in(Room))+adopt( holding(Block))+adopt (atBlock(Block)).
-		if bel(block(Block,Color,Room),nextColor(Color),in(Room),not(atBlock(Block))) then adopt (atBlock(Block))+adopt (holding(Block)).
-		if bel(block(Block,Color,Room),nextColor(Color),in(Room),atBlock(Block)) then adopt (holding(Block)).
+		if bel(block(Block,Color,Room),nextColorInSeq(Color),not (in(Room)))  then  adopt (in(Room))+adopt( holding(Block))+adopt (atBlock(Block)).
+		if bel(block(Block,Color,Room),nextColorInSeq(Color),in(Room),not(atBlock(Block))) then adopt (atBlock(Block))+adopt (holding(Block)).
+		if bel(block(Block,Color,Room),nextColorInSeq(Color),in(Room),atBlock(Block)) then adopt (holding(Block)).
 	}
 }
